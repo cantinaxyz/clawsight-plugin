@@ -1,0 +1,25 @@
+{
+  "name": "@cantinasecurity/clawsight",
+  "version": "0.2.2",
+  "packageManager": "pnpm@9.15.3",
+  "description": "ClawSight — EDR for AI agents. Security guardrails and telemetry plugin for OpenClaw.",
+  "type": "module",
+  "bin": {
+    "clawsight": "./bin/clawsight.mjs"
+  },
+  "dependencies": {
+    "openclaw": "^2026.2.14"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "main": "index.ts",
+  "author": "Pablo Misirov <pablo@spearbit.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cantinaxyz/clawsight-edr"
+  }
+}

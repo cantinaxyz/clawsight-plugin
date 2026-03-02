@@ -1,0 +1,74 @@
+{
+  "id": "clawsight",
+  "name": "ClawSight",
+  "description": "EDR for AI agents — security guardrails and telemetry (no OpenClaw source changes required).",
+  "version": "0.2.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean", "default": true },
+      "mode": {
+        "type": "string",
+        "enum": ["off", "audit", "enforce", "local"],
+        "default": "audit"
+      },
+      "platformUrl": { "type": "string" },
+      "localRulesPath": {
+        "type": "string",
+        "description": "Path to local rules JSON file (default: ~/.openclaw/plugins/clawsight/rules.json). Only used in local mode."
+      },
+      "apiToken": {
+        "type": "string",
+        "description": "ClawSight platform API token. Prefer ${CLAWSIGHT_API_TOKEN} env substitution."
+      },
+      "projectId": { "type": "string" },
+      "agentInstanceId": {
+        "type": "string",
+        "description": "Stable immutable instance ID. If omitted, plugin auto-generates and persists one."
+      },
+      "agentName": {
+        "type": "string",
+        "description": "Human-readable agent label shown in SIEM agent registry."
+      },
+      "identityPath": {
+        "type": "string",
+        "description": "Path for persisted plugin identity file (default: ~/.openclaw/plugins/clawsight/identity.json)."
+      },
+      "ingestPath": { "type": "string", "default": "/v1/telemetry/ingest" },
+      "decidePath": { "type": "string", "default": "/v1/guardrails/decide" },
+      "paymentsSendPath": { "type": "string", "default": "/v1/payments/send" },
+      "flushIntervalMs": { "type": "number", "default": 1000 },
+      "batchMaxEvents": { "type": "number", "default": 200 },
+      "capture": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "messages": { "type": "boolean", "default": true },
+          "messageBody": { "type": "boolean", "default": false },
+          "tools": { "type": "boolean", "default": true },
+          "toolParams": { "type": "boolean", "default": true },
+          "toolResult": { "type": "boolean", "default": false },
+          "diagnostics": { "type": "boolean", "default": true },
+          "logs": { "type": "boolean", "default": false }
+        }
+      },
+      "network": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timeoutMs": { "type": "number", "default": 30000 }
+        }
+      }
+    },
+  "required": []
+  },
+  "uiHints": {
+    "apiToken": { "label": "API Token", "sensitive": true, "placeholder": "${CLAWSIGHT_API_TOKEN}" },
+    "platformUrl": { "label": "Platform URL", "placeholder": "https://api.clawsight.example" },
+    "mode": { "label": "Mode", "help": "audit: log only; enforce: block on policy violations; local: standalone rules from local file; off: disable." },
+    "localRulesPath": { "label": "Local Rules Path", "placeholder": "~/.openclaw/plugins/clawsight/rules.json" },
+    "agentName": { "label": "Agent Name", "placeholder": "prod-openclaw-eu-west-1" },
+    "agentInstanceId": { "label": "Agent Instance ID", "placeholder": "auto-generated-if-empty" }
+  }
+}
