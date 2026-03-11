@@ -1723,6 +1723,60 @@ const plugin = {
       );
     });
 
+    // --- Skill lifecycle telemetry ---
+
+    api.on("after_skill_install", async (event, ctx) => {
+      const rt = getRuntime();
+      if (!rt) {
+        return;
+      }
+      emitWithTrace(
+        rt,
+        {
+          category: "skill",
+          action: "install",
+          severity: "info",
+          openclaw: {
+            agentId: ctx.agentId,
+            sessionKey: ctx.sessionKey,
+          },
+          payload: {
+            skillId: event.skillId,
+            skillName: event.skillName,
+            source: event.source,
+            version: event.version,
+          },
+        },
+        { sessionKey: ctx.sessionKey, sessionId: ctx.sessionId },
+        { allowCreate: true },
+      );
+    });
+
+    api.on("after_skill_remove", async (event, ctx) => {
+      const rt = getRuntime();
+      if (!rt) {
+        return;
+      }
+      emitWithTrace(
+        rt,
+        {
+          category: "skill",
+          action: "remove",
+          severity: "info",
+          openclaw: {
+            agentId: ctx.agentId,
+            sessionKey: ctx.sessionKey,
+          },
+          payload: {
+            skillId: event.skillId,
+            skillName: event.skillName,
+          },
+        },
+        { sessionKey: ctx.sessionKey, sessionId: ctx.sessionId },
+        { allowCreate: true },
+      );
+    });
+
     // --- Chat commands (processed by messaging platform dispatch) ---
     api.registerCommand({
       name: "cs",
