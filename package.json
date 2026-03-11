@@ -1,6 +1,6 @@
 {
   "name": "@cantinasecurity/clawsight",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "packageManager": "pnpm@9.15.3",
   "description": "ClawSight — EDR for AI agents. Security guardrails and telemetry plugin for OpenClaw.",
   "type": "module",
