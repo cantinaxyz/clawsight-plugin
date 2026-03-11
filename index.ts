@@ -1116,6 +1116,30 @@ const plugin = {
         { allowCreate: true },
       );
 
+      const emitBlockedLocal = (
+        source: string,
+        reason: string,
+        extra?: { policyRuleId?: string; policyDecisionId?: string; pendingId?: string },
+      ) => {
+        emitWithTrace(
+          rt,
+          {
+            category: "policy",
+            action: "command_blocked_local",
+            severity: "warn",
+            requestId,
+            outcome: "blocked",
+            outcomeReason: reason,
+            policyRuleId: extra?.policyRuleId,
+            policyDecisionId: extra?.policyDecisionId,
+            openclaw: { agentId: ctx.agentId, sessionKey: ctx.sessionKey, toolName: event.toolName },
+            payload: { source, toolName: event.toolName, reason, ...(extra?.pendingId ? { pendingId: extra.pendingId } : {}) },
+          } as any,
+          { sessionKey: ctx.sessionKey, requestId, toolName: event.toolName },
+          { allowCreate: false },
+        );
+      };
+
       const decision = await rt.decideToolCall({
         projectId: rt.config.projectId,
         agentInstanceId: rt.config.agentInstanceId,
@@ -1177,6 +1201,7 @@ const plugin = {
           if (priorApproval === "approved") {
             // Previously approved — allow through
           } else if (priorApproval === "denied") {
+            emitBlockedLocal("confirm_denied", "Denied by user.", { policyRuleId: decision.ruleId, policyDecisionId: decision.decisionId });
             return { block: true, blockReason: "Denied by user." };
           } else {
             // No prior decision — create pending approval
@@ -1186,21 +1211,22 @@ const plugin = {
               decision.reason ?? "Requires approval",
               decision.ruleId ?? "",
             );
-            return {
-              block: true,
-              blockReason: [
-                `Action requires approval.`,
-                `Tool: ${event.toolName}`,
-                `Command: ${pending.paramsSummary}`,
-                `Pending ID: ${pending.id}`,
-                `Tell the user to send: /cs approve ${pending.id}`,
-              ].join("\n"),
-            };
+            const blockReason = [
+              `Action requires approval.`,
+              `Tool: ${event.toolName}`,
+              `Command: ${pending.paramsSummary}`,
+              `Pending ID: ${pending.id}`,
+              `Tell the user to send: /cs approve ${pending.id}`,
+            ].join("\n");
+            emitBlockedLocal("confirm_pending", "Pending user approval.", { policyRuleId: decision.ruleId, policyDecisionId: decision.decisionId, pendingId: pending.id });
+            return { block: true, blockReason };
           }
         }
 
         if (decision.action === "block") {
-          return { block: true, blockReason: decision.reason ?? "Blocked by ClawSight policy" };
+          const blockReason = decision.reason ?? "Blocked by ClawSight policy";
+          emitBlockedLocal("policy_block", blockReason, { policyRuleId: decision.ruleId, policyDecisionId: decision.decisionId });
+          return { block: true, blockReason };
         }
         if (decision.action === "modify" && decision.params && typeof decision.params === "object") {
           effectiveParams = decision.params as Record<string, unknown>;
@@ -1223,7 +1249,9 @@ const plugin = {
       });
 
       if (intentDecision?.action === "block") {
-        return { block: true, blockReason: intentDecision.reason ?? "Blocked by intent policy" };
+        const blockReason = intentDecision.reason ?? "Blocked by intent policy";
+        emitBlockedLocal("intent_block", blockReason);
+        return { block: true, blockReason };
       }
 
       if (decision?.action === "modify" && decision.params && typeof decision.params === "object") {
